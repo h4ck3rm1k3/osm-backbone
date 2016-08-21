@@ -4,7 +4,7 @@
 
 <!-- https://code.jquery.com/ -->
     <script
-   src="jquery-3.1.0.min.js"></script>
+   src="jquery-3.1.0.js"></script>
 
     <!-- //cdnjs.cloudflare.com/ajax/libs/backbone.js/1.3.3/ -->
     <script src="underscore.js"></script>
@@ -14,6 +14,12 @@
 <h1>this</h1> is a test
 </script>
 
+<script type="text/template" id="search_template">
+  <label>Search</label>
+  <input type="text" id="search_input" />
+  <input type="button" id="search_button" value="Search" />
+    </script>
+    
   </head>
 
   <body>
@@ -24,24 +30,107 @@
     <div class=main>
     </div>
     
-    <div class=search>
-    </div>
+    <div id="search_container"></div>
+    
     <div class=footer>
 
     
 </div>
     
     <script>
-    
+
+function global_search_callback (data) {
+    console.log(data);
+}
+
 var app = app || {};
 
 (function ($) {
     'use strict';
 
 
+    // search view
+  var SearchView = Backbone.View.extend({
+      initialize: function(){
+	  this.render();
+      },
+      render: function(){
+	  // Compile the template using underscore
+	  var template = _.template( $("#search_template").html(), {} );
+	  // Load the compiled HTML into the Backbone "el"
+	  this.$el.html( template );
+      },
+      
+      events: {
+	  "click input[type=button]": "doSearch"
+      },
+      doSearch: function( event ){
+	  // Button clicked, you can access the element that was clicked with event.currentTarget
+	  this.model.search( $("#search_input").val() );
+      }
+      
+  });
+    
+    
+
     var NominatimResultsCollection = Backbone.Collection.extend({});
-    var ResultsCollection = Backbone.Collection.extend({});
-    var SearchObject = Backbone.Model.extend({});
+
+    // for controlling the search
+    var NominatimSearchObject = Backbone.Model.extend({
+	
+	url : 'http://nominatim.openstreetmap.org/search',
+
+	result : function(data) {
+	    console.log(data)
+	},
+	
+	search : function(query) {
+	    var jsonpXHR = $.ajax({
+		type: 'GET',
+		// &json_callback=func
+		url: this.url + '?q='+ encodeURIComponent(query) + '&format=json&polygon_geojson=1',
+		//async: false,
+		//jsonpCallback: 'func',
+		dataType: 'jsonp',
+		jsonp: 'json_callback' // the name of the parameter to pass
+		//jsonpCallback: 'global_search_callback'
+	    });
+	    
+	    jsonpXHR.done(function (response, state, xhr) {
+                //this.success(response);
+		console.log(response);
+            });
+            jsonpXHR.fail(function (xhr, state, errors) {
+                //this.error(errors);
+		console.log("error");
+		console.log(errors);
+            });
+	    
+	},
+	
+    });
+    
+
+    // connect the view to the model
+    //search_view.model = ;
+    var searchObject = new NominatimSearchObject();
+    var search_view = new SearchView({
+	el: $("#search_container"),
+	model : searchObject
+    });
+    // search view
+    
+    /// osm lib
+    var OSMChangeSet  = Backbone.Model.extend({});
+    var OSMUser  = Backbone.Model.extend({});
+    var OSMTag  = Backbone.Model.extend({});
+    var OSMNode = Backbone.Model.extend({});
+    var OSMWay = Backbone.Model.extend({});
+    var OSMRelationship = Backbone.Model.extend({});
+    var OSMWaysCollection = Backbone.Collection.extend({});
+    var OSMNodesCollection = Backbone.Collection.extend({});
+    var OSMTagsCollection = Backbone.Collection.extend({});
+    
     var DataModel = Backbone.Model.extend({});
 	
     var DistrictData = Backbone.Model.extend({
@@ -83,7 +172,7 @@ var app = app || {};
      });
     
     var districtData = new DistrictData();
-    var searchObject  = new SearchObject();
+    var searchObject  = new NominatimSearchObject();
     var dataModel = new DataModel(
 	{
 	    districtData : districtData,
