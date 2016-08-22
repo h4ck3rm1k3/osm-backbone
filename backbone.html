@@ -14,6 +14,10 @@
 <h1>this</h1> is a test
 </script>
 
+    <script type="text/template" id="NominatimSearchResultTemplate">
+    <strong><a href="https://www.openstreetmap.org/<%= osm_type %>/<%= osm_id %>"><span><%= display_name %></span></a></strong>
+    </script>
+    
 <script type="text/template" id="search_template">
   <label>Search</label>
   <input type="text" id="search_input" />
@@ -31,6 +35,11 @@
     </div>
     
     <div id="search_container"></div>
+
+    <div class=results>
+    <ul id ='result_list'></ul>
+    </div>
+    
     
     <div class=footer>
 
@@ -72,33 +81,170 @@ var app = app || {};
   });
     
     
+    var NominatimSearchResult = Backbone.Model.extend({
 
-    var NominatimResultsCollection = Backbone.Collection.extend({});
+	defaults : {
+	    place_id	: 0,           // "144846810"
+	    //licence :
+	    osm_type        : 'null',      // relation, way, node
+	    osm_id          : 0,           // 	"170584"
+	    boundingbox	: [0,0,0,0],
+	    // 	["40.1838339", "40.248298", "-74.8195815", "-74.7289039"]
+	    lat	 :0.0,	    // 	"40.2170575"
+	    lon : 0.0,     // "-74.7429462"
+	    display_name	: '', // 	"Trenton, Mercer County, ...nited States of America"
+	    _class	 : 	"", // place
+	    type	:  	"",// city
+	    importance	: 0.0, // 	0.64618714826091
+	    icon	: "http://", // 	"http://nominatim.openstr...poi_place_city.p.20.png"
+	    geojson : {},
+	    // 	    Object { type="Polygon",  coordinates=[1]}
+	},
+	
+	initialize: function() {
+	    // this.place_id = data.place_id;
+	    // this.osm_type = data.osm_type;
+	    // this.osm_id=data.osm_id;
+	    // this.boundingbox=data.boundingbox;
+	    // this.lat	=data.lat;
+	    // this.lon 	=data.lon;
+	    // this.display_name	=data.display_name;
+	    // this._class		=data.class;
+	    // this.type	=data.type;
+	    // this.importance =data.importance;
+	    // this.icon	=data.icon;
+	    // this.geojson =data.geojson;
+	    // return this;
+	}
+    });
+	
+    var NominatimSearchResultsCollection = Backbone.Collection.extend({
+	model : NominatimSearchResult,
 
+
+	//results : [],// json results from server to decode
+	
+	// initialize: function() {
+	//     for (var element in this.results) {
+	// 	var data = this.results[element];		
+	// 	this.add(
+	// 	    new NominatimSearchResult({		
+	// 		place_id : data.place_id,
+	// 		osm_type : data.osm_type,
+	// 		osm_id   : data.osm_id,
+	// 		boundingbox :data.boundingbox,
+	// 		lat	: data.lat,
+	// 		lon 	:data.lon,
+	// 		display_name:data.display_name,
+	// 		_class		:data.class,
+	// 		type	:data.type,
+	// 		importance: data.importance,
+	// 		icon	:data.icon,
+	// 		geojson :data.geojson,
+	// 	    })
+	// 	);
+	//     }
+	//     //console.log(data);
+	//     //return this;
+	// }
+	
+	
+    });
+    
+    var NominatimSearchResultView = Backbone.View.extend({
+	tagName: 'li',
+	
+	template: _.template( $('#NominatimSearchResultTemplate').html()),
+
+	result : [],
+	
+	initialize: function(){
+	    this.render();
+	    //return this;
+	},
+	
+	render: function(){
+	    var d =  this.model.toJSON();
+	    console.log(d);
+	    this.$el.html( this.template(d));
+	    return this;
+	}
+    });
+
+    var NominatimSearchResultsView = Backbone.View.extend({
+	// tagName: 'ul',
+	tagName: 'ul',
+
+	render: function() {
+		this.collection.each(function(result) {
+		    var view = new NominatimSearchResultView({ model: result });
+		    this.$el.append(view.render().el);
+		}, this);
+	    return this;
+	}
+	
+	// results: [],
+	
+	// render: function() {
+	//     console.log(this)
+	//     console.log(this.collection)
+
+	//     var index;
+	//     for (index = 0; index < this.collection.length; index ++) {
+	// 	var result = this.collection[index];	    
+	// 	console.log(result);
+	// 	var resView = new NominatimSearchResultView({ model: result });
+
+	// 	console.log(resView);
+	// 	console.log(resView.model);
+		
+	// 	var html = resView.render().el;
+	// 	this.$el.append(html);
+	//     }
+	    
+	//     return this;
+	// },
+	
+	//  initialize: function(){
+
+	     
+	// //     return this;
+	// },
+	
+    });
+
+    
     // for controlling the search
     var NominatimSearchObject = Backbone.Model.extend({
 	
 	url : 'http://nominatim.openstreetmap.org/search',
 
 	result : function(data) {
-	    console.log(data)
+	    //console.log(data)
+	    
+	    this.results = new NominatimSearchResultsCollection(data);
+
+	    this.view = new NominatimSearchResultsView({collection : this.results});
+
+	    this.view.render();
+	    
+	    $('#result_list').html(this.view.el);
 	},
 	
 	search : function(query) {
+	    var self = this;
 	    var jsonpXHR = $.ajax({
+		sink : self,
 		type: 'GET',
-		// &json_callback=func
 		url: this.url + '?q='+ encodeURIComponent(query) + '&format=json&polygon_geojson=1',
-		//async: false,
-		//jsonpCallback: 'func',
-		dataType: 'jsonp',
+		dataType: 'jsonp', // treat as json
 		jsonp: 'json_callback' // the name of the parameter to pass
-		//jsonpCallback: 'global_search_callback'
+
 	    });
 	    
 	    jsonpXHR.done(function (response, state, xhr) {
                 //this.success(response);
-		console.log(response);
+		this.sink.result(response);
             });
             jsonpXHR.fail(function (xhr, state, errors) {
                 //this.error(errors);
@@ -151,6 +297,7 @@ var app = app || {};
 	    this.$search = this.$('.search');
 	    this.$footer = this.$('.footer');
 	    this.$main = this.$('.main');
+	    //return this;
 	},
 	
 	
