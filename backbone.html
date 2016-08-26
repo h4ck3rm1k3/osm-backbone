@@ -221,7 +221,8 @@ var app = app || {};
 
 	result : function(data) {
 	    //console.log(data)
-	    
+
+	    $('#result_list').empty();
 	    this.results = new NominatimSearchResultsCollection(data);
 
 	    this.view = new NominatimSearchResultsView({collection : this.results});
