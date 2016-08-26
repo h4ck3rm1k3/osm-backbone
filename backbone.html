@@ -11,41 +11,41 @@
     <script src="backbone.js"></script>
 
     <script id='testTemplate' type='text/template'>
-<h1>this</h1> is a test
+<h1>Open Street Map</h1>
 </script>
 
     <script type="text/template" id="NominatimSearchResultTemplate">
     <strong><a href="https://www.openstreetmap.org/<%= osm_type %>/<%= osm_id %>"><span><%= display_name %></span></a></strong>
     </script>
-    
+
 <script type="text/template" id="search_template">
   <label>Search</label>
   <input type="text" id="search_input" />
   <input type="button" id="search_button" value="Search" />
     </script>
-    
+
   </head>
 
   <body>
 
     <div class=schoolapp>
     </div>
-    
+
     <div class=main>
     </div>
-    
+
     <div id="search_container"></div>
 
     <div class=results>
     <ul id ='result_list'></ul>
     </div>
-    
-    
+
+
     <div class=footer>
 
-    
+
 </div>
-    
+
     <script>
 
 function global_search_callback (data) {
@@ -69,45 +69,62 @@ var app = app || {};
 	  // Load the compiled HTML into the Backbone "el"
 	  this.$el.html( template );
       },
-      
+
       events: {
+	  'keydown': '_enter',
 	  "click input[type=button]": "doSearch"
       },
+
       doSearch: function( event ){
 	  // Button clicked, you can access the element that was clicked with event.currentTarget
+	  $('#result_list').empty();
+	  $('#result_list').html('<div>searching ... </div>');
 	  this.model.search( $("#search_input").val() );
-      }
-      
+      },
+
+
+      _enter:  function ( event ) {
+	  //console.log('event target:', + event.target.name + ', ' + event.currentTarget.name); // eslint-disable-line no-console
+	  if ( event.keyCode === 13 ) {
+	      console.log('enter key down'); // eslint-disable-line no-console
+	      var d = $("#search_input").val() ;
+	      console.log('search for ' + d); // eslint-disable-line no-console
+	      this.model.search( d );
+	  }
+
+      },
+
+
   });
-    
-    
+
+
     var NominatimSearchResult = Backbone.Model.extend({
 
 	defaults : {
 	    place_id	: 0,           // "144846810"
 	    //licence :
 	    osm_type        : 'null',      // relation, way, node
-	    osm_id          : 0,           // 	"170584"
+	    osm_id          : 0,           //	"170584"
 	    boundingbox	: [0,0,0,0],
-	    // 	["40.1838339", "40.248298", "-74.8195815", "-74.7289039"]
-	    lat	 :0.0,	    // 	"40.2170575"
+	    //	["40.1838339", "40.248298", "-74.8195815", "-74.7289039"]
+	    lat	 :0.0,	    //	"40.2170575"
 	    lon : 0.0,     // "-74.7429462"
-	    display_name	: '', // 	"Trenton, Mercer County, ...nited States of America"
-	    _class	 : 	"", // place
-	    type	:  	"",// city
-	    importance	: 0.0, // 	0.64618714826091
-	    icon	: "http://", // 	"http://nominatim.openstr...poi_place_city.p.20.png"
+	    display_name	: '', //	"Trenton, Mercer County, ...nited States of America"
+	    _class	 :	"", // place
+	    type	:	"",// city
+	    importance	: 0.0, //	0.64618714826091
+	    icon	: "http://", //		"http://nominatim.openstr...poi_place_city.p.20.png"
 	    geojson : {},
-	    // 	    Object { type="Polygon",  coordinates=[1]}
+	    //	    Object { type="Polygon",  coordinates=[1]}
 	},
-	
+
 	initialize: function() {
 	    // this.place_id = data.place_id;
 	    // this.osm_type = data.osm_type;
 	    // this.osm_id=data.osm_id;
 	    // this.boundingbox=data.boundingbox;
 	    // this.lat	=data.lat;
-	    // this.lon 	=data.lon;
+	    // this.lon		=data.lon;
 	    // this.display_name	=data.display_name;
 	    // this._class		=data.class;
 	    // this.type	=data.type;
@@ -117,52 +134,52 @@ var app = app || {};
 	    // return this;
 	}
     });
-	
+
     var NominatimSearchResultsCollection = Backbone.Collection.extend({
 	model : NominatimSearchResult,
 
 
 	//results : [],// json results from server to decode
-	
+
 	// initialize: function() {
 	//     for (var element in this.results) {
-	// 	var data = this.results[element];		
-	// 	this.add(
-	// 	    new NominatimSearchResult({		
-	// 		place_id : data.place_id,
-	// 		osm_type : data.osm_type,
-	// 		osm_id   : data.osm_id,
-	// 		boundingbox :data.boundingbox,
-	// 		lat	: data.lat,
-	// 		lon 	:data.lon,
-	// 		display_name:data.display_name,
-	// 		_class		:data.class,
-	// 		type	:data.type,
-	// 		importance: data.importance,
-	// 		icon	:data.icon,
-	// 		geojson :data.geojson,
-	// 	    })
-	// 	);
+	//	var data = this.results[element];
+	//	this.add(
+	//	    new NominatimSearchResult({
+	//		place_id : data.place_id,
+	//		osm_type : data.osm_type,
+	//		osm_id   : data.osm_id,
+	//		boundingbox :data.boundingbox,
+	//		lat	: data.lat,
+	//		lon	:data.lon,
+	//		display_name:data.display_name,
+	//		_class		:data.class,
+	//		type	:data.type,
+	//		importance: data.importance,
+	//		icon	:data.icon,
+	//		geojson :data.geojson,
+	//	    })
+	//	);
 	//     }
 	//     //console.log(data);
 	//     //return this;
 	// }
-	
-	
+
+
     });
-    
+
     var NominatimSearchResultView = Backbone.View.extend({
 	tagName: 'li',
-	
+
 	template: _.template( $('#NominatimSearchResultTemplate').html()),
 
 	result : [],
-	
+
 	initialize: function(){
 	    this.render();
 	    //return this;
 	},
-	
+
 	render: function(){
 	    var d =  this.model.toJSON();
 	    console.log(d);
@@ -182,56 +199,57 @@ var app = app || {};
 		}, this);
 	    return this;
 	}
-	
+
 	// results: [],
-	
+
 	// render: function() {
 	//     console.log(this)
 	//     console.log(this.collection)
 
 	//     var index;
 	//     for (index = 0; index < this.collection.length; index ++) {
-	// 	var result = this.collection[index];	    
-	// 	console.log(result);
-	// 	var resView = new NominatimSearchResultView({ model: result });
+	//	var result = this.collection[index];
+	//	console.log(result);
+	//	var resView = new NominatimSearchResultView({ model: result });
 
-	// 	console.log(resView);
-	// 	console.log(resView.model);
-		
-	// 	var html = resView.render().el;
-	// 	this.$el.append(html);
+	//	console.log(resView);
+	//	console.log(resView.model);
+
+	//	var html = resView.render().el;
+	//	this.$el.append(html);
 	//     }
-	    
+
 	//     return this;
 	// },
-	
+
 	//  initialize: function(){
 
-	     
+
 	// //     return this;
 	// },
-	
+
     });
 
-    
+
     // for controlling the search
     var NominatimSearchObject = Backbone.Model.extend({
-	
+
 	url : 'http://nominatim.openstreetmap.org/search',
 
 	result : function(data) {
 	    //console.log(data)
+	    $('#result_list').html("<div>Loading results</div>");
 
-	    $('#result_list').empty();
+
 	    this.results = new NominatimSearchResultsCollection(data);
 
 	    this.view = new NominatimSearchResultsView({collection : this.results});
-
+	    $('#result_list').empty();
 	    this.view.render();
-	    
+
 	    $('#result_list').html(this.view.el);
 	},
-	
+
 	search : function(query) {
 	    var self = this;
 	    var jsonpXHR = $.ajax({
@@ -242,21 +260,21 @@ var app = app || {};
 		jsonp: 'json_callback' // the name of the parameter to pass
 
 	    });
-	    
+
 	    jsonpXHR.done(function (response, state, xhr) {
-                //this.success(response);
+		//this.success(response);
 		this.sink.result(response);
-            });
-            jsonpXHR.fail(function (xhr, state, errors) {
-                //this.error(errors);
+	    });
+	    jsonpXHR.fail(function (xhr, state, errors) {
+		//this.error(errors);
 		console.log("error");
 		console.log(errors);
-            });
-	    
+	    });
+
 	},
-	
+
     });
-    
+
 
     // connect the view to the model
     //search_view.model = ;
@@ -266,7 +284,7 @@ var app = app || {};
 	model : searchObject
     });
     // search view
-    
+
     /// osm lib
     var OSMChangeSet  = Backbone.Model.extend({});
     var OSMUser  = Backbone.Model.extend({});
@@ -277,9 +295,9 @@ var app = app || {};
     var OSMWaysCollection = Backbone.Collection.extend({});
     var OSMNodesCollection = Backbone.Collection.extend({});
     var OSMTagsCollection = Backbone.Collection.extend({});
-    
+
     var DataModel = Backbone.Model.extend({});
-	
+
     var DistrictData = Backbone.Model.extend({
 	defaults : {
 	    starting_relation  : "Lawrence Township School Districts"
@@ -288,43 +306,38 @@ var app = app || {};
 					    );
 
     app.AppView = Backbone.View.extend({
-	
+
 	//el: '.schoolapp',
 	tagName : 'div',
 
 	template : $("#testTemplate").html(),
-	
+
 	initialize: function () {
 	    this.$search = this.$('.search');
 	    this.$footer = this.$('.footer');
 	    this.$main = this.$('.main');
 	    //return this;
 	},
-	
-	
+
+
 	render: function () {
 	    //this.$main.show();
 	    //this.$footer.show();
 	    var tmpl = _.template(this.template);
 	    var data = {}; //this.model.toJSON()
-            this.$el.html(tmpl(data));
-	    
+	    this.$el.html(tmpl(data));
+
 	    return this;
 	},
-	
-	
-	search: function (todo) {
-	    
-	},
-	
+
      });
-    
+
     var districtData = new DistrictData();
     var searchObject  = new NominatimSearchObject();
     var dataModel = new DataModel(
 	{
 	    districtData : districtData,
-	    searchObject : searchObject	    
+	    searchObject : searchObject
 	}
     );
     // and create it
@@ -341,4 +354,3 @@ var app = app || {};
 </script>
     </body>
     </html>
-    
